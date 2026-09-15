@@ -13,7 +13,7 @@ function App() {
       .then((response) => response.json())
       .then((data) => setStudents(data))
       .catch((error) => console.error(error));
-  }, []);
+}, []);
 
   // Gửi dữ liệu lên API POST
   const handleSubmit = async (e) => {
@@ -27,29 +27,47 @@ function App() {
       const response = await fetch(
         API_URL,
         {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(newStudent),
-        }
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(newStudent),
+}
       );
-      const data = await response.json();
+const data = await response.json();
       if (!response.ok) {
         throw new Error(data.message);
       }
       // Thêm vào danh sách
       setStudents([...students, data]);
       // Xóa dữ liệu trên form
-      setStudentId("");
-      setName("");
-      setEmail("");
-      alert("Thêm sinh viên thành công!");
+setStudentId("");
+setName("");
+setEmail("");
+setEditingId(null);
+
+alert(editingId ? "Cập nhật thành công!" : "Thêm sinh viên thành công!");
     } catch (error) {
       console.error(error);
       alert("Có lỗi xảy ra!");
     }
   };
+  const handleEdit = (student) => {
+  setStudentId(student.studentId);
+  setName(student.name);
+  setEmail(student.email);
+  setEditingId(student._id);
+};
+
+const handleDelete = async (id) => {
+  if (!window.confirm("Bạn có chắc muốn xóa?")) return;
+
+  await fetch(`${API_URL}/${id}`, {
+    method: "DELETE",
+  });
+
+ await loadStudents();
+};
   return (
     <div style={{ width: "700px", margin: "30px auto" }}>
       <h1 style={{ textAlign: "center" }}>Danh sách sinh viên</h1>
@@ -156,15 +174,15 @@ function App() {
         </div>
 
         <div style={{ textAlign: "center" }}>
-          <button
-            type="submit"
-            style={{
-              padding: "10px 20px",
-              cursor: "pointer",
-            }}
-          >
-            Thêm sinh viên
-          </button>
+         <button
+    type="submit"
+    style={{
+      padding: "10px 20px",
+      cursor: "pointer",
+    }}
+  >
+    {editingId ? "Cập nhật" : "Thêm sinh viên"}
+  </button>
         </div>
       </form>
 
@@ -178,23 +196,37 @@ function App() {
           textAlign: "center",
         }}
       >
-        <thead>
-          <tr>
-            <th>MSSV</th>
-            <th>Họ tên</th>
-            <th>Email</th>
-          </tr>
-        </thead>
+       <thead>
+  <tr>
+    <th>MSSV</th>
+    <th>Họ tên</th>
+    <th>Email</th>
+    <th>Thao tác</th>
+  </tr>
+</thead>
 
-        <tbody>
-          {students.map((student) => (
-            <tr key={student._id}>
-              <td>{student.studentId}</td>
-              <td>{student.name}</td>
-              <td>{student.email}</td>
-            </tr>
-          ))}
-        </tbody>
+       <tbody>
+  {students.map((student) => (
+    <tr key={student._id}>
+      <td>{student.studentId}</td>
+      <td>{student.name}</td>
+      <td>{student.email}</td>
+
+      <td>
+        <button onClick={() => handleEdit(student)}>
+          Sửa
+        </button>
+
+        <button
+          onClick={() => handleDelete(student._id)}
+          style={{ marginLeft: "10px" }}
+        >
+          Xóa
+        </button>
+      </td>
+    </tr>
+  ))}
+</tbody>
       </table>
     </div>
   );

@@ -6,9 +6,19 @@ const Student = require("./models/Student");
 const mongoose = require("mongoose");
 require("dotenv").config();
 
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log("Connected to MongoDB Atlas"))
-  .catch(err => console.error(err));
+let databaseConnected = false;
+const mongoUri = process.env.MONGODB_URI;
+
+if (mongoUri) {
+    mongoose.connect(mongoUri)
+        .then(() => {
+            databaseConnected = true;
+            console.log("Connected to MongoDB Atlas");
+        })
+        .catch(err => console.error("MongoDB connection failed:", err.message));
+} else {
+    console.warn("MONGODB_URI is not set; starting without database");
+}
 
 const app = express();
 
@@ -17,12 +27,19 @@ app.use(express.json());
 
 // API kiểm tra server
 app.get("/api/hello", (req, res) => {
-    res.send("Backend đang hoạt động");
+    res.json({ message: "Backend đang hoạt động", databaseConnected });
 });
 
+const requireDatabase = (req, res, next) => {
+    if (!databaseConnected) {
+        return res.status(503).json({ message: "MongoDB chưa kết nối" });
+    }
+
+    next();
+};
 
 // Câu 36: GET danh sách sinh viên
-app.get("/api/Students", async (req, res) => {
+app.get("/api/Students", requireDatabase, async (req, res) => {
     try {
         const students = await Student.find();
         res.json(students);
@@ -33,7 +50,7 @@ app.get("/api/Students", async (req, res) => {
 
 
 // Câu 37: POST thêm sinh viên
-app.post("/api/Students", async (req, res) => {
+app.post("/api/Students", requireDatabase, async (req, res) => {
     try {
         const student = await Student.create(req.body);
         res.status(201).json(student);
@@ -44,7 +61,7 @@ app.post("/api/Students", async (req, res) => {
 
 
 // Câu 38: PUT cập nhật sinh viên
-app.put("/api/Students/:id", async (req, res) => {
+app.put("/api/Students/:id", requireDatabase, async (req, res) => {
     try {
         const student = await Student.findByIdAndUpdate(
             req.params.id,
@@ -64,7 +81,7 @@ app.put("/api/Students/:id", async (req, res) => {
 
 
 // Câu 39: DELETE xóa sinh viên
-app.delete("/api/Students/:id", async (req, res) => {
+app.delete("/api/Students/:id", requireDatabase, async (req, res) => {
     try {
         const student = await Student.findByIdAndDelete(req.params.id);
 
@@ -79,6 +96,8 @@ app.delete("/api/Students/:id", async (req, res) => {
 });
 
 
-app.listen(5000, () => {
-    console.log("Server is running on port 5000");
+const port = process.env.PORT || 5000;
+
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
 });
