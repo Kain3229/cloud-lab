@@ -1,76 +1,143 @@
 import { useEffect, useState } from "react";
- const API_URL = "https://expert-fiesta-5g596494gpv7f7xvj-5000.app.github.dev/api/Students" ;
+
+// URL Backend API
+const API_URL =
+  "https://xx72x48h-5000.asse.devtunnels.ms/api/students";
+
 function App() {
   const [students, setStudents] = useState([]);
 
   const [studentId, setStudentId] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
- 
-  // Lấy danh sách sinh viên
-  useEffect(() => {
-    fetch(API_URL)
-      .then((response) => response.json())
-      .then((data) => setStudents(data))
-      .catch((error) => console.error(error));
-}, []);
 
-  // Gửi dữ liệu lên API POST
+  // ID của sinh viên đang được sửa
+  // null = đang ở chế độ thêm mới
+  const [editingId, setEditingId] = useState(null);
+
+  // Hàm lấy danh sách sinh viên
+  const loadStudents = async () => {
+    try {
+      const response = await fetch(API_URL);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message);
+      }
+
+      setStudents(data);
+    } catch (error) {
+      console.error(error);
+      alert("Không thể lấy danh sách sinh viên!");
+    }
+  };
+
+  // Khi mở trang thì lấy danh sách sinh viên
+  useEffect(() => {
+    loadStudents();
+  }, []);
+
+  // Thêm hoặc cập nhật sinh viên
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const newStudent = {
+
+    const student = {
       studentId,
       name,
       email,
     };
+
     try {
-      const response = await fetch(
-        API_URL,
-        {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(newStudent),
-}
-      );
-const data = await response.json();
+      let response;
+
+      // Nếu có editingId => đang sửa
+      if (editingId) {
+        response = await fetch(`${API_URL}/${editingId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(student),
+        });
+      } else {
+        // Không có editingId => thêm mới
+        response = await fetch(API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(student),
+        });
+      }
+
+      const data = await response.json();
+
       if (!response.ok) {
         throw new Error(data.message);
       }
-      // Thêm vào danh sách
-      setStudents([...students, data]);
-      // Xóa dữ liệu trên form
-setStudentId("");
-setName("");
-setEmail("");
-setEditingId(null);
 
-alert(editingId ? "Cập nhật thành công!" : "Thêm sinh viên thành công!");
+      // Lấy lại danh sách từ Backend
+      await loadStudents();
+
+      // Xóa dữ liệu form
+      setStudentId("");
+      setName("");
+      setEmail("");
+      setEditingId(null);
+
+      if (editingId) {
+        alert("Cập nhật thành công!");
+      } else {
+        alert("Thêm sinh viên thành công!");
+      }
     } catch (error) {
       console.error(error);
-      alert("Có lỗi xảy ra!");
+      alert("Có lỗi xảy ra: " + error.message);
     }
   };
+
+  // Khi bấm nút Sửa
   const handleEdit = (student) => {
-  setStudentId(student.studentId);
-  setName(student.name);
-  setEmail(student.email);
-  setEditingId(student._id);
-};
+    setStudentId(student.studentId);
+    setName(student.name);
+    setEmail(student.email);
 
-const handleDelete = async (id) => {
-  if (!window.confirm("Bạn có chắc muốn xóa?")) return;
+    // Lưu _id của sinh viên đang sửa
+    setEditingId(student._id);
+  };
 
-  await fetch(`${API_URL}/${id}`, {
-    method: "DELETE",
-  });
+  // Khi bấm nút Xóa
+  const handleDelete = async (id) => {
+    if (!window.confirm("Bạn có chắc muốn xóa?")) {
+      return;
+    }
 
- await loadStudents();
-};
+    try {
+      const response = await fetch(`${API_URL}/${id}`, {
+        method: "DELETE",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message);
+      }
+
+      // Cập nhật lại danh sách
+      await loadStudents();
+
+      alert("Xóa sinh viên thành công!");
+    } catch (error) {
+      console.error(error);
+      alert("Có lỗi xảy ra: " + error.message);
+    }
+  };
+
   return (
     <div style={{ width: "700px", margin: "30px auto" }}>
-      <h1 style={{ textAlign: "center" }}>Danh sách sinh viên</h1>
+      <h1 style={{ textAlign: "center" }}>
+        Danh sách sinh viên
+      </h1>
 
       {/* FORM */}
       <form
@@ -84,7 +151,9 @@ const handleDelete = async (id) => {
           backgroundColor: "#f8f8f8",
         }}
       >
-        <h2 style={{ textAlign: "center" }}>Thêm sinh viên</h2>
+        <h2 style={{ textAlign: "center" }}>
+          {editingId ? "Cập nhật sinh viên" : "Thêm sinh viên"}
+        </h2>
 
         {/* MSSV */}
         <div
@@ -174,19 +243,39 @@ const handleDelete = async (id) => {
         </div>
 
         <div style={{ textAlign: "center" }}>
-         <button
-    type="submit"
-    style={{
-      padding: "10px 20px",
-      cursor: "pointer",
-    }}
-  >
-    {editingId ? "Cập nhật" : "Thêm sinh viên"}
-  </button>
+          <button
+            type="submit"
+            style={{
+              padding: "10px 20px",
+              cursor: "pointer",
+            }}
+          >
+            {editingId ? "Cập nhật" : "Thêm sinh viên"}
+          </button>
+
+          {/* Nút Hủy khi đang sửa */}
+          {editingId && (
+            <button
+              type="button"
+              onClick={() => {
+                setStudentId("");
+                setName("");
+                setEmail("");
+                setEditingId(null);
+              }}
+              style={{
+                padding: "10px 20px",
+                marginLeft: "10px",
+                cursor: "pointer",
+              }}
+            >
+              Hủy
+            </button>
+          )}
         </div>
       </form>
 
-      {/* Bảng danh sách */}
+      {/* BẢNG DANH SÁCH */}
       <table
         border="1"
         cellPadding="8"
@@ -196,37 +285,37 @@ const handleDelete = async (id) => {
           textAlign: "center",
         }}
       >
-       <thead>
-  <tr>
-    <th>MSSV</th>
-    <th>Họ tên</th>
-    <th>Email</th>
-    <th>Thao tác</th>
-  </tr>
-</thead>
+        <thead>
+          <tr>
+            <th>MSSV</th>
+            <th>Họ tên</th>
+            <th>Email</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
 
-       <tbody>
-  {students.map((student) => (
-    <tr key={student._id}>
-      <td>{student.studentId}</td>
-      <td>{student.name}</td>
-      <td>{student.email}</td>
+        <tbody>
+          {students.map((student) => (
+            <tr key={student._id}>
+              <td>{student.studentId}</td>
+              <td>{student.name}</td>
+              <td>{student.email}</td>
 
-      <td>
-        <button onClick={() => handleEdit(student)}>
-          Sửa
-        </button>
+              <td>
+                <button onClick={() => handleEdit(student)}>
+                  Sửa
+                </button>
 
-        <button
-          onClick={() => handleDelete(student._id)}
-          style={{ marginLeft: "10px" }}
-        >
-          Xóa
-        </button>
-      </td>
-    </tr>
-  ))}
-</tbody>
+                <button
+                  onClick={() => handleDelete(student._id)}
+                  style={{ marginLeft: "10px" }}
+                >
+                  Xóa
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
       </table>
     </div>
   );
