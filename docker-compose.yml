@@ -1,0 +1,14 @@
+services:
+  backend:
+    build:
+      context: ./merndemo/server
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./merndemo/server/.env
+
+  frontend:
+    build:
+      context: ./client
+    ports:
+      - "5173:4173"

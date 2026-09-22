@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 // URL Backend API
 const API_URL =
-  "https://xx72x48h-5000.asse.devtunnels.ms/api/students";
+  "http://localhost:5000/api/students";
 
 function App() {
   const [students, setStudents] = useState([]);
