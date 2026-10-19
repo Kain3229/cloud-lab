@@ -1,0 +1,14 @@
+services:
+  backend:
+    image: thangt3/mern-backend:1.0
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./merndemo/server/.env
+
+  frontend:
+    image: thangt3/mern-frontend:1.0
+    ports:
+      - "5173:4173"
+    depends_on:
+      - backend
