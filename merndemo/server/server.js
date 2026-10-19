@@ -95,9 +95,17 @@ app.delete("/api/Students/:id", requireDatabase, async (req, res) => {
     }
 });
 
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "UP",
+    timestamp: new Date(),
+    uptime: process.uptime()
+  });
+});
 
 const port = process.env.PORT || 5000;
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
+    console.log("Backend Version 1.2");
 });
