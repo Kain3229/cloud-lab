@@ -136,7 +136,7 @@ function App() {
   return (
     <div style={{ width: "700px", margin: "30px auto" }}>
       <h1 style={{ textAlign: "center" }}>
-        Danh sách sinh viên
+        Sinh viên - Docker v2.0
       </h1>
 
       {/* FORM */}
