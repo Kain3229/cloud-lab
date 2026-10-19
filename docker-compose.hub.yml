@@ -5,9 +5,11 @@ services:
       - "5000:5000"
     env_file:
       - ./merndemo/server/.env
+    dns:
+      - 168.63.129.16
 
   frontend:
-    image: thangt3/mern-frontend:1.0
+    image: thangt3/mern-frontend:2.0
     ports:
       - "5173:4173"
     depends_on:
